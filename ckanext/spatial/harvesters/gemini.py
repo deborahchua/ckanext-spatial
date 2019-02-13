@@ -35,7 +35,7 @@ from ckanext.harvest.model import HarvestObject
 from ckanext.spatial.model import GeminiDocument
 from ckanext.spatial.lib.csw_client import CswService
 
-from ckanext.spatial.harvesters.base import SpatialHarvester, text_traceback
+from ckanext.spatial.harvesters.base import SpatialHarvester
 
 
 log = logging.getLogger(__name__)
@@ -51,7 +51,6 @@ class GeminiHarvester(SpatialHarvester):
 
     All three harvesters share the same import stage
     '''
-
 
     def import_stage(self, harvest_object):
         log = logging.getLogger(__name__ + '.import')
@@ -71,11 +70,12 @@ class GeminiHarvester(SpatialHarvester):
             self.import_gemini_object(harvest_object.content)
             return True
         except Exception, e:
-            log.error('Exception during import: %s' % text_traceback())
             if not str(e).strip():
                 self._save_object_error('Error importing Gemini document.', harvest_object, 'Import')
+                log.error('Error importing Gemini document')
             else:
                 self._save_object_error('Error importing Gemini document: %s' % str(e), harvest_object, 'Import')
+                log.error('Error importing Gemini document: %s' % str(e))
             raise
             if debug_exception_mode:
                 raise
@@ -570,7 +570,7 @@ class GeminiCswHarvester(GeminiHarvester, SingletonPlugin):
                     continue
 
         except Exception, e:
-            log.error('Exception: %s' % text_traceback())
+            log.error('Error gathering the identifiers from the CSW server [%s]' % str(e))
             self._save_gather_error('Error gathering the identifiers from the CSW server [%s]' % str(e), harvest_job)
             return None
 
@@ -645,7 +645,7 @@ class GeminiDocHarvester(GeminiHarvester, SingletonPlugin):
 
         # Get contents
         try:
-            content = self._get_content(url)
+            content = self._get_content_as_unicode(url)
         except Exception,e:
             self._save_gather_error('Unable to get content for URL: %s: %r' % \
                                         (url, e),harvest_job)
@@ -706,7 +706,7 @@ class GeminiWafHarvester(GeminiHarvester, SingletonPlugin):
 
         # Get contents
         try:
-            content = self._get_content(url)
+            content = self._get_content_as_unicode(url)
         except Exception,e:
             self._save_gather_error('Unable to get content for URL: %s: %r' % \
                                         (url, e),harvest_job)
@@ -715,7 +715,7 @@ class GeminiWafHarvester(GeminiHarvester, SingletonPlugin):
         try:
             for url in self._extract_urls(content,url):
                 try:
-                    content = self._get_content(url)
+                    content = self._get_content_as_unicode(url)
                 except Exception, e:
                     msg = 'Couldn\'t harvest WAF link: %s: %s' % (url, e)
                     self._save_gather_error(msg,harvest_job)
@@ -795,5 +795,3 @@ class GeminiWafHarvester(GeminiHarvester, SingletonPlugin):
         base_url += '/'
         log.debug('WAF base URL: %s', base_url)
         return [base_url + i for i in urls]
-
-
