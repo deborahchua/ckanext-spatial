@@ -56,6 +56,15 @@ def test_gemini_import_stage_exceptions_reraise_if_in_debug(mock_save_object_err
     assert ex.exception.message == 'Internal Server Error'
 
 
+@patch('ckanext.spatial.harvesters.gemini.GeminiHarvester._save_object_error')
+def test_gemini_import_stage(mock_save_object_error):
+    mock_harvest_object = Mock()
+
+    gemini = GeminiHarvester()
+    gemini.import_stage(mock_harvest_object)
+    assert False
+
+
 class TestGeminiWithMockServer(TestMockServer):
 
     @patch('ckanext.spatial.harvesters.gemini.GeminiHarvester._save_gather_error')
